@@ -18,7 +18,7 @@ empty :: IndexMapping a
 empty = IndexMapping (M.empty) (M.empty)
 
 singleton :: (Hashable a) => a -> IndexMapping a
-singleton a = IndexMapping (M.singleton a $ S.singleton 1) (M.singleton 0 a)
+singleton a = IndexMapping (M.singleton a $ S.singleton 1) (M.singleton 1 a)
 
 insert :: (Hashable a, Eq a) => Int -> a -> IndexMapping a -> IndexMapping a
 insert i a (IndexMapping m im) =
