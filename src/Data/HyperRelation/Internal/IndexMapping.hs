@@ -2,38 +2,38 @@
 
 module Data.HyperRelation.Internal.IndexMapping where
 
-import           Data.IntMap (IntMap)
-import qualified Data.IntMap as IM
-import           Data.Map    (Map)
-import qualified Data.Map    as M
-import           Data.Set    (Set)
-import qualified Data.Set    as S
+import           Data.Hashable       (Hashable)
+import           Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
+import           Data.HashSet        (HashSet)
+import qualified Data.HashSet        as S
 
+-- Forse questi nomi interni sono da cambiare
 data IndexMapping a = IndexMapping
-            { toIndices   :: Map a (Set Int)
-            , fromIndices :: IntMap a
+            { toIndices   :: HashMap a (HashSet Int)
+            , fromIndices :: HashMap Int a
             } deriving (Show, Eq)
 
 empty :: IndexMapping a
-empty = IndexMapping (M.empty) (IM.empty)
+empty = IndexMapping (M.empty) (M.empty)
 
-singleton :: a -> IndexMapping a
-singleton a = IndexMapping (M.singleton a $ S.singleton 1) (IM.singleton 0 a)
+singleton :: (Hashable a) => a -> IndexMapping a
+singleton a = IndexMapping (M.singleton a $ S.singleton 1) (M.singleton 0 a)
 
-insert :: Ord a => Int -> a -> IndexMapping a -> IndexMapping a
+insert :: (Hashable a, Eq a) => Int -> a -> IndexMapping a -> IndexMapping a
 insert i a (IndexMapping m im) =
   IndexMapping
     (M.insertWith S.union a (S.singleton i) m)
-    (IM.insert i a im)
+    (M.insert i a im)
 
-lookup :: Ord a => a -> IndexMapping a -> [Int]
+lookup :: (Hashable a, Eq a) => a -> IndexMapping a -> [Int]
 lookup a (IndexMapping m im) = maybe [] S.toList (M.lookup a m)
 
-lookupIndex :: Int -> IndexMapping a -> Maybe a
-lookupIndex i (IndexMapping m im) = IM.lookup i im
+lookupIndex :: (Hashable a) => Int -> IndexMapping a -> Maybe a
+lookupIndex i (IndexMapping m im) = M.lookup i im
 
-size :: IndexMapping a -> Int
-size (IndexMapping m im) = IM.size im
+size :: (Hashable a) => IndexMapping a -> Int
+size (IndexMapping m im) = M.size im
 
-elem :: Ord a => a -> IndexMapping a -> Bool
+elem :: (Hashable a, Eq a) => a -> IndexMapping a -> Bool
 elem a (IndexMapping m im) = maybe False (const True) (M.lookup a m)

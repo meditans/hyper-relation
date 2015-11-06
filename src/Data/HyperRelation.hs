@@ -14,6 +14,7 @@ module Data.HRC where
 
 import           Control.Applicative (liftA2)
 import           Data.Maybe          (catMaybes)
+import Data.Hashable (Hashable)
 
 import qualified Data.HyperRelation.Internal.IndexMapping as IM
 import           Data.HyperRelation.Internal.Proxy
@@ -22,6 +23,7 @@ import           Data.HyperRelation.Internal.Relation
 
 -- PROVE
 
+a :: IM.IndexMapping String
 a = IM.insert 4 "due" $ IM.insert 3 "tre" $ IM.insert 2 "due" $ IM.empty
 
 
@@ -51,7 +53,7 @@ instance HRC '[] where
   singleton' EndRel      = EndHR
   insert' EndRel EndHR   = EndHR
 
-instance (Ord a, HRC as) => HRC (a ': as) where
+instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   null (a :<=>: _)                   = IM.size a == 0
   size (a :<=>: _)                   = IM.size a
   empty                              = IM.empty :<=>: empty
@@ -88,11 +90,11 @@ instance HRL n '[] where
   member Proxy _ EndHR = False
   lookupIndices Proxy _ EndHR = []
 
-instance Ord a => HRL 'Z (a ': as) where
+instance (Eq a, Hashable a) => HRL 'Z (a ': as) where
   member Proxy a (m :<=>: _) = IM.elem a m
   lookupIndices Proxy a (m :<=>: _) = IM.lookup a m
 
-instance (Ord a, HRL n as) => HRL ('S n) (a ': as) where
+instance (Eq a, Hashable a, HRL n as) => HRL ('S n) (a ': as) where
   member Proxy x (_ :<=>: ms) = member (Proxy :: Proxy n) x ms
   lookupIndices Proxy x (_ :<=>: ms) = lookupIndices (Proxy :: Proxy n) x ms
 
