@@ -8,7 +8,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.HyperRelation.Internal.ToRelation where
+module Data.HyperRelation.Internal.Relation where
 
 import Data.HyperRelation.Internal.Proxy
 
@@ -38,7 +38,6 @@ instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
 class ToRelation a (as :: [*]) where
     toRelation :: a -> Relation as
 
--- ToRelation
 instance ToRelation () '[]  where
     toRelation () = EndRel
 
