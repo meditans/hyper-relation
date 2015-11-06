@@ -60,7 +60,7 @@ instance (Ord a, HRC as) => HRC (a ': as) where
   singleton' (x :<->: xs)            = IM.singleton x :<=>: singleton' xs
   insert' (x :<->: xs) (m :<=>: ms)  = IM.insert (IM.size m + 1) x m :<=>: insert' xs ms
 
-inserto :: (HRC as, ToRelation a as) => a -> HyperRelation as -> HyperRelation as
+inserto :: (HRC as, IsRelation a as) => a -> HyperRelation as -> HyperRelation as
 inserto r m = insert' (toRelation r) m
 
 provaInserto :: HyperRelation '[Int, String]

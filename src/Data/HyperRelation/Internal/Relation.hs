@@ -35,43 +35,50 @@ instance RelationSideAt 'Z (a ': as) where
 instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
     sideAt Proxy (_ :<->: xs) = sideAt (Proxy :: Proxy n) xs
 
-class ToRelation a (as :: [*]) where
-    toRelation :: a -> Relation as
+class IsRelation a (as :: [*]) where
+    toRelation   :: a -> Relation as
+    fromRelation :: Relation as -> a
 
-instance ToRelation () '[]  where
+instance IsRelation () '[]  where
     toRelation () = EndRel
+    fromRelation EndRel = ()
 
-instance ToRelation a0 '[a0] where
+instance IsRelation a0 '[a0] where
     toRelation x0 = x0 :<->: EndRel
+    fromRelation (x0 :<->: EndRel) = x0
 
-instance ToRelation (a0, a1) '[a0, a1] where
+instance IsRelation (a0, a1) '[a0, a1] where
     toRelation (x0, x1) = x0 :<->: x1 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: EndRel) = (x0, x1)
 
-instance ToRelation (a0, a1, a2) '[a0, a1, a2] where
+instance IsRelation (a0, a1, a2) '[a0, a1, a2] where
     toRelation (x0, x1, x2) = x0 :<->: x1 :<->: x2 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: EndRel) = (x0, x1, x2)
 
-instance ToRelation (a0, a1, a2, a3) '[a0, a1, a2, a3] where
+instance IsRelation (a0, a1, a2, a3) '[a0, a1, a2, a3] where
     toRelation (x0, x1, x2, x3) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: EndRel) = (x0, x1, x2, x3)
 
-instance ToRelation (a0, a1, a2, a3, a4) '[a0, a1, a2, a3, a4] where
+instance IsRelation (a0, a1, a2, a3, a4) '[a0, a1, a2, a3, a4] where
     toRelation (x0, x1, x2, x3, x4) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: EndRel) = (x0, x1, x2, x3, x4)
 
-instance ToRelation (a0, a1, a2, a3, a4, a5) '[a0, a1, a2, a3, a4, a5] where
-    toRelation (x0, x1, x2, x3, x4, x5) = x0 :<->: x1 :<->: x2 :<->: x3
-                                    :<->: x4 :<->: x5 :<->: EndRel
+instance IsRelation (a0, a1, a2, a3, a4, a5) '[a0, a1, a2, a3, a4, a5] where
+    toRelation (x0, x1, x2, x3, x4, x5) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: EndRel) = (x0, x1, x2, x3, x4, x5)
 
-instance ToRelation (a0, a1, a2, a3, a4, a5, a6) '[a0, a1, a2, a3, a4, a5, a6] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6) = x0 :<->: x1 :<->: x2 :<->: x3
-                                        :<->: x4 :<->: x5 :<->: x6 :<->: EndRel
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6) '[a0, a1, a2, a3, a4, a5, a6] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6)
 
-instance ToRelation (a0, a1, a2, a3, a4, a5, a6, a7) '[a0, a1, a2, a3, a4, a5, a6, a7] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4
-                                            :<->: x5 :<->: x6 :<->: x7 :<->: EndRel
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7) '[a0, a1, a2, a3, a4, a5, a6, a7] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7)
 
-instance ToRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8) '[a0, a1, a2, a3, a4, a5, a6, a7, a8] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5
-                                                :<->: x6 :<->: x7 :<->: x8 :<->: EndRel
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8) '[a0, a1, a2, a3, a4, a5, a6, a7, a8] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7, x8)
 
-instance ToRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) '[a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5
-                                                    :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) '[a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel
+    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9)
