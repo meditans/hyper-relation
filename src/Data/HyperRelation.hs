@@ -15,7 +15,6 @@ module Data.HRC where
 import           Control.Applicative (liftA2)
 import           Data.Maybe          (catMaybes)
 
-import           Data.HyperRelation.Internal.IndexMapping (IndexMapping)
 import qualified Data.HyperRelation.Internal.IndexMapping as IM
 import           Data.HyperRelation.Internal.Proxy
 import           Data.HyperRelation.Internal.Relation
@@ -29,7 +28,7 @@ a = IM.insert 4 "due" $ IM.insert 3 "tre" $ IM.insert 2 "due" $ IM.empty
 -- Parte sui tipi
 data family HyperRelation (as :: [*])
 data instance HyperRelation '[]       = EndHR
-data instance HyperRelation (a ': as) = IndexMapping a :<=>: HyperRelation as
+data instance HyperRelation (a ': as) = IM.IndexMapping a :<=>: HyperRelation as
 
 infixr 4 :<=>:
 
@@ -63,6 +62,9 @@ instance (Ord a, HRC as) => HRC (a ': as) where
 inserto :: (HRC as, IsRelation a as) => a -> HyperRelation as -> HyperRelation as
 inserto r m = insert' (toRelation r) m
 
+fromListo :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
+fromListo = foldl (flip inserto) empty
+
 provaInserto :: HyperRelation '[Int, String]
 provaInserto = inserto (1 :: Int, "uno" :: String)
              $ inserto (2 :: Int, "uno" :: String) empty
@@ -74,6 +76,9 @@ provaInserto2 = inserto (1 :: Int, "uno" :: String, 2 :: Int)
 provaInserto3 :: HyperRelation '[Int, String, Int]
 provaInserto3 = inserto (1 :: Int, "uno" :: String, 2 :: Int)
               $ inserto (2 :: Int, "uno" :: String, 3 :: Int) empty
+
+provaInserto4 :: HyperRelation '[Int, String, Int]
+provaInserto4 = fromListo ([(1, "uno", 2) , (2, "uno", 3)] :: [(Int, String, Int)])
 
 class HRL (n :: Nat) (as :: [*]) where
     member :: Proxy n -> TypeAt n as -> HyperRelation as -> Bool
