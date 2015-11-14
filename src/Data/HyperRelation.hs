@@ -20,6 +20,8 @@ import qualified Data.HyperRelation.Internal.IndexMapping as IM
 import           Data.HyperRelation.Internal.Proxy
 import           Data.HyperRelation.Internal.Relation
 
+import qualified Data.HashSet as HS
+
 
 -- PROVE
 
@@ -44,6 +46,7 @@ class HRC (as :: [*]) where
   lookupRelation :: Int -> HyperRelation as -> Maybe (Relation as)
   singleton'     :: Relation as -> HyperRelation as
   insert'        :: Relation as -> HyperRelation as -> HyperRelation as
+  simultLookup   :: Relation (Maybes as) -> HyperRelation as -> Maybe (HS.HashSet Int)
 
 instance HRC '[] where
   null EndHR             = True
@@ -52,6 +55,7 @@ instance HRC '[] where
   lookupRelation _ EndHR = Just EndRel
   singleton' EndRel      = EndHR
   insert' EndRel EndHR   = EndHR
+  simultLookup EndRel EndHR = Nothing
 
 instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   null (a :<=>: _)                   = IM.size a == 0
@@ -60,12 +64,18 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   lookupRelation i (a :<=>: ims)     = liftA2 (:<->:) (IM.lookupIndex i a) (lookupRelation i ims)
   singleton' (x :<->: xs)            = IM.singleton x :<=>: singleton' xs
   insert' (x :<->: xs) (m :<=>: ms)  = IM.insert (IM.size m + 1) x m :<=>: insert' xs ms
+  simultLookup (Nothing :<->: as) (h :<=>: hs) = simultLookup as hs
+  simultLookup (Just a :<->: as)  (h :<=>: hs) = case simultLookup as hs of
+    Just hs -> Just (HS.intersection hs (IM.lookup a h))
+    Nothing -> Just (IM.lookup a h)
 
 inserto :: (HRC as, IsRelation a as) => a -> HyperRelation as -> HyperRelation as
 inserto r m = insert' (toRelation r) m
 
 fromListo :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
 fromListo = foldl (flip inserto) empty
+
+type ProvaType = (Maybe Int, Maybe String, Maybe Int)
 
 provaInserto :: HyperRelation '[Int, String]
 provaInserto = inserto (1 :: Int, "uno" :: String)
@@ -82,13 +92,34 @@ provaInserto3 = inserto (1 :: Int, "uno" :: String, 2 :: Int)
 provaInserto4 :: HyperRelation '[Int, String, Int]
 provaInserto4 = fromListo ([(1, "uno", 2) , (2, "uno", 3)] :: [(Int, String, Int)])
 
+provaInserto5 :: HyperRelation '[Int, String, Int]
+provaInserto5 = fromListo ([ (1, "uno", 3)
+                           , (2, "due", 3)
+                           , (3, "tre", 3)
+                           , (4, "quattro", 7)
+                           , (5, "cinque", 6)
+                           , (6, "sei", 3)
+                           , (7, "sette", 5)
+                           , (8, "otto", 4)
+                           , (9, "nove", 4)
+                           , (10, "dieci", 5)
+                           , (11, "undici", 6)
+                           , (12, "dodici", 6)
+                           ] :: [(Int, String, Int)])
+
+provaRel :: Relation '[Int,String,Int]
+provaRel = 1 :<->: "uno" :<->: 2 :<->: EndRel
+
+provaRel2 :: Relation (Maybes '[Int,String,Int])
+provaRel2 = Nothing :<->: Just "uno" :<->: Nothing :<->: EndRel
+
 class HRL (n :: Nat) (as :: [*]) where
     member        :: Proxy n -> TypeAt n as -> HyperRelation as -> Bool
-    lookupIndices :: Proxy n -> TypeAt n as -> HyperRelation as -> [Int]
+    lookupIndices :: Proxy n -> TypeAt n as -> HyperRelation as -> HS.HashSet Int
 
 instance HRL n '[] where
   member        Proxy _ EndHR = False
-  lookupIndices Proxy _ EndHR = []
+  lookupIndices Proxy _ EndHR = HS.empty
 
 instance (Eq a, Hashable a) => HRL 'Z (a ': as) where
   member        Proxy a (m :<=>: _) = IM.elem a m
@@ -98,11 +129,18 @@ instance (Eq a, Hashable a, HRL n as) => HRL ('S n) (a ': as) where
   member        Proxy x (_ :<=>: ms) = member (Proxy :: Proxy n) x ms
   lookupIndices Proxy x (_ :<=>: ms) = lookupIndices (Proxy :: Proxy n) x ms
 
-lookupo :: (HRC as, HRL n as) => Proxy n -> TypeAt n as -> HyperRelation as -> [Relation as]
-lookupo proxy x m = catMaybes $ map (\i -> lookupRelation i m) (lookupIndices proxy x m)
+lookupo :: (HRL n as, HRC as) => Proxy n -> TypeAt n as -> HyperRelation as -> [Relation as]
+lookupo proxy x m = catMaybes . map (\i -> lookupRelation i m) . HS.toList $ (lookupIndices proxy x m)
+
+hyperLookup :: (HRC as) => Relation (Maybes as) -> HyperRelation as -> [Relation as]
+hyperLookup rel hyrel = catMaybes . map (\i -> lookupRelation i hyrel) . HS.toList . maybe HS.empty id $ simultLookup rel hyrel
 
 assoco :: (HRC as, IsRelation a as) => HyperRelation as -> [a]
 assoco xs = map fromRelation . (maybe [] id) . sequence $ map (\i -> lookupRelation i xs) [1..size xs]
+
+type family Maybes a where
+  Maybes ('[])     = '[]
+  Maybes (a ': as) = Maybe a ': Maybes as
 
 -- Interfaccia aggiuntiva:
 {-

@@ -40,8 +40,8 @@ insert i a (IndexMapping m im) =
     (M.insertWith S.union a (S.singleton i) m)
     (M.insert i a im)
 
-lookup :: (Hashable a, Eq a) => a -> IndexMapping a -> [Int]
-lookup a (IndexMapping m im) = maybe [] S.toList (M.lookup a m)
+lookup :: (Hashable a, Eq a) => a -> IndexMapping a -> HashSet Int
+lookup a (IndexMapping m im) = maybe (S.empty) id (M.lookup a m)
 
 lookupIndex :: (Hashable a) => Int -> IndexMapping a -> Maybe a
 lookupIndex i (IndexMapping m im) = M.lookup i im
@@ -58,6 +58,8 @@ deleteIndex i (IndexMapping m im) = case lookupIndex i (IndexMapping m im) of
     Just a  -> IndexMapping (deleteOrRemove a i m) (M.delete i im)
     Nothing -> IndexMapping m im
 
+-- indices :: (Hashable a, Eq a) => a -> IndexMapping a -> (HashSet Int)
+-- indices = undefined
 
 ----------------- Not exported functions ----------------
 
