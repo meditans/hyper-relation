@@ -8,13 +8,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-{-# OPTIONS_GHC -fdefer-typed-holes #-}
+module Data.HyperRelation
+  ( Relation, toRelation, fromRelation
+  , hyperLookup
+  , lookup
+  , fromList
+  , assoc
+  , HyperRelation (..)
+  , Maybes (..)
+  ) where
 
-module Data.HyperRelation where
-
+import           Prelude hiding      (lookup)
 import           Control.Applicative (liftA2)
 import           Data.Maybe          (catMaybes)
-import Data.Hashable (Hashable)
+import           Data.Hashable       (Hashable)
 
 import qualified Data.HyperRelation.Internal.IndexMapping as IM
 import           Data.HyperRelation.Internal.Proxy
@@ -22,14 +29,6 @@ import           Data.HyperRelation.Internal.Relation
 
 import qualified Data.HashSet as HS
 
-
--- PROVE
-
-a :: IM.IndexMapping String
-a = IM.insert 4 "due" $ IM.insert 3 "tre" $ IM.insert 2 "due" $ IM.empty
-
-
--- Parte sui tipi
 data family   HyperRelation (as :: [*])
 data instance HyperRelation '[]       = EndHR
 data instance HyperRelation (a ': as) = IM.IndexMapping a :<=>: HyperRelation as
@@ -64,6 +63,7 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   lookupRelation i (a :<=>: ims)     = liftA2 (:<->:) (IM.lookupIndex i a) (lookupRelation i ims)
   singleton' (x :<->: xs)            = IM.singleton x :<=>: singleton' xs
   insert' (x :<->: xs) (m :<=>: ms)  = IM.insert (IM.size m + 1) x m :<=>: insert' xs ms
+
   simultLookup (Nothing :<->: as) (h :<=>: hs) = simultLookup as hs
   simultLookup (Just a :<->: as)  (h :<=>: hs) = case simultLookup as hs of
     Just hs -> Just (HS.intersection hs (IM.lookup a h))
@@ -72,46 +72,8 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
 inserto :: (HRC as, IsRelation a as) => a -> HyperRelation as -> HyperRelation as
 inserto r m = insert' (toRelation r) m
 
-fromListo :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
-fromListo = foldl (flip inserto) empty
-
-type ProvaType = (Maybe Int, Maybe String, Maybe Int)
-
-provaInserto :: HyperRelation '[Int, String]
-provaInserto = inserto (1 :: Int, "uno" :: String)
-             $ inserto (2 :: Int, "uno" :: String) empty
-
-provaInserto2 :: HyperRelation '[Int, String, Int]
-provaInserto2 = inserto (1 :: Int, "uno" :: String, 2 :: Int)
-              $ inserto (2 :: Int, "uno" :: String, 3 :: Int) empty
-
-provaInserto3 :: HyperRelation '[Int, String, Int]
-provaInserto3 = inserto (1 :: Int, "uno" :: String, 2 :: Int)
-              $ inserto (2 :: Int, "uno" :: String, 3 :: Int) empty
-
-provaInserto4 :: HyperRelation '[Int, String, Int]
-provaInserto4 = fromListo ([(1, "uno", 2) , (2, "uno", 3)] :: [(Int, String, Int)])
-
-provaInserto5 :: HyperRelation '[Int, String, Int]
-provaInserto5 = fromListo ([ (1, "uno", 3)
-                           , (2, "due", 3)
-                           , (3, "tre", 3)
-                           , (4, "quattro", 7)
-                           , (5, "cinque", 6)
-                           , (6, "sei", 3)
-                           , (7, "sette", 5)
-                           , (8, "otto", 4)
-                           , (9, "nove", 4)
-                           , (10, "dieci", 5)
-                           , (11, "undici", 6)
-                           , (12, "dodici", 6)
-                           ] :: [(Int, String, Int)])
-
-provaRel :: Relation '[Int,String,Int]
-provaRel = 1 :<->: "uno" :<->: 2 :<->: EndRel
-
-provaRel2 :: Relation (Maybes '[Int,String,Int])
-provaRel2 = Nothing :<->: Just "uno" :<->: Nothing :<->: EndRel
+fromList :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
+fromList = foldl (flip inserto) empty
 
 class HRL (n :: Nat) (as :: [*]) where
     member        :: Proxy n -> TypeAt n as -> HyperRelation as -> Bool
@@ -129,149 +91,19 @@ instance (Eq a, Hashable a, HRL n as) => HRL ('S n) (a ': as) where
   member        Proxy x (_ :<=>: ms) = member (Proxy :: Proxy n) x ms
   lookupIndices Proxy x (_ :<=>: ms) = lookupIndices (Proxy :: Proxy n) x ms
 
-lookupo :: (HRL n as, HRC as) => Proxy n -> TypeAt n as -> HyperRelation as -> [Relation as]
-lookupo proxy x m = catMaybes . map (\i -> lookupRelation i m) . HS.toList $ (lookupIndices proxy x m)
+-- | Example usage: `lookup first rel hyrel` finds all the relations containing
+--   `rel` in the first position.
+lookup :: (HRL n as, HRC as, IsRelation a as) => Proxy n -> TypeAt n as -> HyperRelation as -> [a]
+lookup proxy x m = map fromRelation . catMaybes . map (\i -> lookupRelation i m) . HS.toList $ (lookupIndices proxy x m)
 
-hyperLookup :: (HRC as) => Relation (Maybes as) -> HyperRelation as -> [Relation as]
-hyperLookup rel hyrel = catMaybes . map (\i -> lookupRelation i hyrel) . HS.toList . maybe HS.empty id $ simultLookup rel hyrel
+hyperLookup :: (HRC as, IsRelation a (Maybes as), IsRelation b as) => a -> HyperRelation as -> [b]
+hyperLookup rel hyrel = map fromRelation . catMaybes
+                         $ map (\i -> lookupRelation i hyrel) . HS.toList . maybe HS.empty id
+                         $ simultLookup (toRelation rel) hyrel
 
-assoco :: (HRC as, IsRelation a as) => HyperRelation as -> [a]
-assoco xs = map fromRelation . (maybe [] id) . sequence $ map (\i -> lookupRelation i xs) [1..size xs]
+assoc :: (HRC as, IsRelation a as) => HyperRelation as -> [a]
+assoc xs = map fromRelation . (maybe [] id) . sequence $ map (\i -> lookupRelation i xs) [1..size xs]
 
 type family Maybes a where
   Maybes ('[])     = '[]
   Maybes (a ': as) = Maybe a ': Maybes as
-
--- Interfaccia aggiuntiva:
-{-
-    (!) :: Questo e' per cercare l'indice di una relazione. Di fatto e' lookupRelation
-    (\\) :: Questo e' per cancellare delle relazioni TODO
-
-    , member :: Cioe' se una relazione e' presente, per intero? Questo e' interessante! TODO
-    , notMember :: TODO
-    , M.lookup :: Tutta la relazione
-    , findWithDefault :: TODO
-
-    , insertWith :: Inserisce una relazione decidendo come modificare TODO
-    , insertWithKey :: Anche con la key della relazione TODO
-    , insertLookupWithKey :: TODO
-
-    -- ** Delete\/Update ----------> PENSARE AL RESTO DELLE FUNZIONALITA'
-    , delete :: ASSOLUTAMENTE TODO
-    , adjust :: ???
-    , adjustWithKey :: ???
-    , update :: ???
-    , updateWithKey :: ???
-    , updateLookupWithKey :: ???
-    , alter :: ???
-
-    -- * Combine
-
-    -- ** Union -------------> COME UNIRE IN GENERALE?
-    , union
-    , unionWith
-    , unionWithKey
-    , unions
-    , unionsWith
-
-    -- ** Difference
-    , difference
-    , differenceWith
-    , differenceWithKey
-
-    -- ** Intersection
-    , intersection
-    , intersectionWith
-    , intersectionWithKey
-
-    -- ** Universal combining function
-    , mergeWithKey
-
-    -- * Traversal
-    -- ** Map
-    , M.map
-    , mapWithKey
-    , traverseWithKey
-    , mapAccum
-    , mapAccumWithKey
-    , mapAccumRWithKey
-    , mapKeys
-    , mapKeysWith
-    , mapKeysMonotonic
-
-    -- * Folds
-    , M.foldr
-    , M.foldl
-    , foldrWithKey
-    , foldlWithKey
-    , foldMapWithKey
-
-    -- ** Strict folds
-    , foldr'
-    , foldl'
-    , foldrWithKey'
-    , foldlWithKey'
-
-    -- * Conversion
-    , elems :: Cosa sono in questo caso gli elementi di una mappa?
-    , keys :: Cosa sono in questo caso le chiavi di una mappa?
-    , assocs :: questa e' buona, ritornarle come una lista! Questo e' in ascending key order
-    , keysSet
-    , fromSet
-
-    -- ** Lists --> Tutte queste sono interessanti
-    , toList
-    , fromList
-    , fromListWith
-    , fromListWithKey
-
-    -- ** Ordered lists --> Quali ordinamenti
-    , toAscList
-    , toDescList
-    , fromAscList
-    , fromAscListWith
-    , fromAscListWithKey
-    , fromDistinctAscList
-
-    -- * Filter ---> Sono importanti
-    , M.filter
-    , filterWithKey
-    , partition
-    , partitionWithKey
-
-    , mapMaybe
-    , mapMaybeWithKey
-    , mapEither
-    , mapEitherWithKey
-
-    , split
-    , splitLookup
-    , splitRoot
-
-    -- * Submap
-    , isSubmapOf, isSubmapOfBy
-    , isProperSubmapOf, isProperSubmapOfBy
-
-    -- * Indexed
-    , lookupIndex
-    , findIndex
-    , elemAt
-    , updateAt
-    , deleteAt
-
-    -- * Min\/Max
-    , findMin
-    , findMax
-    , deleteMin
-    , deleteMax
-    , deleteFindMin
-    , deleteFindMax
-    , updateMin
-    , updateMax
-    , updateMinWithKey
-    , updateMaxWithKey
-    , minView
-    , maxView
-    , minViewWithKey
-    , maxViewWithKey
--}

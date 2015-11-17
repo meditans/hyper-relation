@@ -1,0 +1,131 @@
+-- Interfaccia aggiuntiva:
+    (!) :: Questo e' per cercare l'indice di una relazione. Di fatto e' lookupRelation
+    (\\) :: Questo e' per cancellare delle relazioni TODO
+
+    , member :: Cioe' se una relazione e' presente, per intero? Questo e' interessante! TODO
+    , notMember :: TODO
+    , M.lookup :: Tutta la relazione
+    , findWithDefault :: TODO
+
+    , insertWith :: Inserisce una relazione decidendo come modificare TODO
+    , insertWithKey :: Anche con la key della relazione TODO
+    , insertLookupWithKey :: TODO
+
+    -- ** Delete\/Update ----------> PENSARE AL RESTO DELLE FUNZIONALITA'
+    , delete :: ASSOLUTAMENTE TODO
+    , adjust :: ???
+    , adjustWithKey :: ???
+    , update :: ???
+    , updateWithKey :: ???
+    , updateLookupWithKey :: ???
+    , alter :: ???
+
+    -- * Combine
+
+    -- ** Union -------------> COME UNIRE IN GENERALE?
+    , union
+    , unionWith
+    , unionWithKey
+    , unions
+    , unionsWith
+
+    -- ** Difference
+    , difference
+    , differenceWith
+    , differenceWithKey
+
+    -- ** Intersection
+    , intersection
+    , intersectionWith
+    , intersectionWithKey
+
+    -- ** Universal combining function
+    , mergeWithKey
+
+    -- * Traversal
+    -- ** Map
+    , M.map
+    , mapWithKey
+    , traverseWithKey
+    , mapAccum
+    , mapAccumWithKey
+    , mapAccumRWithKey
+    , mapKeys
+    , mapKeysWith
+    , mapKeysMonotonic
+
+    -- * Folds
+    , M.foldr
+    , M.foldl
+    , foldrWithKey
+    , foldlWithKey
+    , foldMapWithKey
+
+    -- ** Strict folds
+    , foldr'
+    , foldl'
+    , foldrWithKey'
+    , foldlWithKey'
+
+    -- * Conversion
+    , elems :: Cosa sono in questo caso gli elementi di una mappa?
+    , keys :: Cosa sono in questo caso le chiavi di una mappa?
+    , assocs :: questa e' buona, ritornarle come una lista! Questo e' in ascending key order
+    , keysSet
+    , fromSet
+
+    -- ** Lists --> Tutte queste sono interessanti
+    , toList
+    , fromList
+    , fromListWith
+    , fromListWithKey
+
+    -- ** Ordered lists --> Quali ordinamenti
+    , toAscList
+    , toDescList
+    , fromAscList
+    , fromAscListWith
+    , fromAscListWithKey
+    , fromDistinctAscList
+
+    -- * Filter ---> Sono importanti
+    , M.filter
+    , filterWithKey
+    , partition
+    , partitionWithKey
+
+    , mapMaybe
+    , mapMaybeWithKey
+    , mapEither
+    , mapEitherWithKey
+
+    , split
+    , splitLookup
+    , splitRoot
+
+    -- * Submap
+    , isSubmapOf, isSubmapOfBy
+    , isProperSubmapOf, isProperSubmapOfBy
+
+    -- * Indexed
+    , lookupIndex
+    , findIndex
+    , elemAt
+    , updateAt
+    , deleteAt
+
+    -- * Min\/Max
+    , findMin
+    , findMax
+    , deleteMin
+    , deleteMax
+    , deleteFindMin
+    , deleteFindMax
+    , updateMin
+    , updateMax
+    , updateMinWithKey
+    , updateMaxWithKey
+    , minView
+    , maxView
+    , minViewWithKey
+    , maxViewWithKey
