@@ -1,3 +1,4 @@
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -35,17 +36,9 @@ instance RelationSideAt 'Z (a ': as) where
 instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
     sideAt Proxy (_ :<->: xs) = sideAt (Proxy :: Proxy n) xs
 
-class IsRelation a (as :: [*]) where
+class IsRelation a as | a -> as, as -> a where
     toRelation   :: a -> Relation as
     fromRelation :: Relation as -> a
-
-instance IsRelation () '[]  where
-    toRelation () = EndRel
-    fromRelation EndRel = ()
-
-instance IsRelation a0 '[a0] where
-    toRelation x0 = x0 :<->: EndRel
-    fromRelation (x0 :<->: EndRel) = x0
 
 instance IsRelation (a0, a1) '[a0, a1] where
     toRelation (x0, x1) = x0 :<->: x1 :<->: EndRel
