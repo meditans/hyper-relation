@@ -58,9 +58,6 @@ deleteIndex i (IndexMapping m im) = case lookupIndex i (IndexMapping m im) of
     Just a  -> IndexMapping (deleteOrRemove a i m) (M.delete i im)
     Nothing -> IndexMapping m im
 
--- indices :: (Hashable a, Eq a) => a -> IndexMapping a -> (HashSet Int)
--- indices = undefined
-
 ----------------- Not exported functions ----------------
 
 deleteOrRemove :: (Eq a, Hashable a) => a -> Int -> HashMap a (HashSet Int) -> HashMap a (HashSet Int)

@@ -1,10 +1,8 @@
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures, DataKinds #-}
 
 module Data.HyperRelation.Internal.Proxy where
 
 data Nat = Z | S Nat
-
 data Proxy (a :: Nat) = Proxy
 
 first :: Proxy Z

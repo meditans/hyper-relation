@@ -103,7 +103,3 @@ hyperLookup rel hyrel = map fromRelation . catMaybes
 
 assoc :: (HRC as, IsRelation a as) => HyperRelation as -> [a]
 assoc xs = map fromRelation . (maybe [] id) . sequence $ map (\i -> lookupRelation i xs) [1..size xs]
-
-type family Maybes a where
-  Maybes ('[])     = '[]
-  Maybes (a ': as) = Maybe a ': Maybes as

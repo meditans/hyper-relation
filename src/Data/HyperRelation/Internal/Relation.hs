@@ -1,18 +1,11 @@
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, TypeFamilies, StandaloneDeriving #-}
+{-# LANGUAGE FunctionalDependencies, ScopedTypeVariables, TypeOperators #-}
 
 module Data.HyperRelation.Internal.Relation where
 
 import Data.HyperRelation.Internal.Proxy
 
+---------- Relation data family
 data family Relation (as :: [*])
 data instance Relation '[] = EndRel
 data instance Relation (a ': as) = a :<->: Relation as
@@ -26,6 +19,12 @@ infixr 4 :<->:
 deriving instance Show (Relation '[])
 deriving instance (Show a, Show (Relation as)) => Show (Relation (a ': as))
 
+---------- Maybes type family
+type family Maybes a where
+  Maybes ('[])     = '[]
+  Maybes (a ': as) = Maybe a ': Maybes as
+
+---------- RelationSideAt class
 class RelationSideAt (n :: Nat) (as :: [*]) where
     -- |Retrieve the value at the specified side of the relation.
     sideAt :: Proxy n -> Relation as -> TypeAt n as
@@ -36,6 +35,7 @@ instance RelationSideAt 'Z (a ': as) where
 instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
     sideAt Proxy (_ :<->: xs) = sideAt (Proxy :: Proxy n) xs
 
+---------- IsRelation class
 class IsRelation a as | a -> as, as -> a where
     toRelation   :: a -> Relation as
     fromRelation :: Relation as -> a
