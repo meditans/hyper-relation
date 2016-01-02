@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TypeFamilies, StandaloneDeriving #-}
-{-# LANGUAGE FunctionalDependencies, ScopedTypeVariables, TypeOperators #-}
+{-# LANGUAGE FunctionalDependencies, ScopedTypeVariables, TypeOperators, DataKinds #-}
 
 module Data.HyperRelation.Internal.Relation where
 
@@ -39,6 +39,10 @@ instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
 class IsRelation a as | a -> as, as -> a where
     toRelation   :: a -> Relation as
     fromRelation :: Relation as -> a
+
+instance IsRelation () '[] where
+  toRelation () = EndRel
+  fromRelation EndRel = ()
 
 instance IsRelation (a0, a1) '[a0, a1] where
     toRelation (x0, x1) = x0 :<->: x1 :<->: EndRel
