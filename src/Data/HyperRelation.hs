@@ -87,19 +87,19 @@ lookupOUT :: (IsRelation t (Maybes as), HRC as, IsRelation s as) => t -> HyperRe
 lookupOUT t (HyperRelation itd dti) = map (fromRelation . fromJust . flip IM.lookup itd)
                                     . fromMaybe []
                                     . fmap IS.toList
-                                    $ simultLookupIN (toRelation t) dti
+                                    $ lookupIN (toRelation t) dti
 
 class HRC (as :: [*]) where
   emptyIN     :: HyperRelation' as
   singletonIN :: Relation as -> HyperRelation' as
   insertIN    :: Int -> Relation as -> HyperRelation' as -> HyperRelation' as
-  simultLookupIN :: Relation (Maybes as) -> HyperRelation' as -> Maybe IS.IntSet
+  lookupIN :: Relation (Maybes as) -> HyperRelation' as -> Maybe IS.IntSet
 
 instance HRC '[] where
   emptyIN                     = EndHR
   singletonIN EndRel          = EndHR
   insertIN _ EndRel EndHR     = EndHR
-  simultLookupIN EndRel EndHR = Nothing
+  lookupIN EndRel EndHR = Nothing
 
 instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   emptyIN = HM.empty :<=>: emptyIN
@@ -108,9 +108,9 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
 
   -- | Probabilmente devo usare la monade First
   -- Provare inoltre cosa fa quando non c'e' quello che si sta cercando.
-  simultLookupIN (Nothing :<->: as) (h :<=>: hs) = simultLookupIN as hs
-  simultLookupIN (Just a  :<->: as) (h :<=>: hs) =
-    case simultLookupIN as hs of
+  lookupIN (Nothing :<->: as) (h :<=>: hs) = lookupIN as hs
+  lookupIN (Just a  :<->: as) (h :<=>: hs) =
+    case lookupIN as hs of
       Just goodIndices -> case HM.lookup a h of
         Just newIndices -> Just $ IS.intersection goodIndices newIndices
         Nothing         -> Just goodIndices
