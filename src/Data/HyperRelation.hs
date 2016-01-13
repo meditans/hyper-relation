@@ -125,15 +125,6 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
 fromList :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
 fromList = foldl (flip insertOUT) emptyOUT
 
-
--- hyperLookup :: (HRC as, IsRelation a (Maybes as), IsRelation b as) => a -> HyperRelation' as -> [b]
--- hyperLookup rel hyrel = map fromRelation . catMaybes
---                          $ map (\i -> lookupRelation i hyrel) . HS.toList . maybe HS.empty id
---                          $ simultLookup (toRelation rel) hyrel
-
--- assoc :: (HRC as, IsRelation a as) => HyperRelation' as -> [a]
--- assoc xs = map fromRelation . (maybe [] id) . sequence $ map (\i -> lookupRelation i xs) [1..size xs]
-
 --------------------------------------------------------------------------------
 -- Example section
 --------------------------------------------------------------------------------
