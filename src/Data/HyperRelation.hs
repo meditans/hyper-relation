@@ -112,7 +112,12 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
       Nothing -> Just $ maybe (IS.empty) id                   (HM.lookup a h)
 
 fromList :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
-fromList = foldl (flip insertOUT) emptyOUT
+fromList = foldl' (flip insertOUT) emptyOUT
+
+union :: (HRC as, IsRelation t as) => HyperRelation as -> HyperRelation as -> HyperRelation as
+union hr1 hr2 = foldl' (flip insertOUT) hrMax (map fromRelation . IM.elems $ indexToData hrMin)
+  where hrMax = maximumBy (comparing sizeOUT) [hr1, hr2]
+        hrMin = minimumBy (comparing sizeOUT) [hr1, hr2]
 
 --------------------------------------------------------------------------------
 -- Example section
