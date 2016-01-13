@@ -83,11 +83,11 @@ insertOUT t (HyperRelation itd dti) = let ni = IM.size itd + 1
                                       in HyperRelation (IM.insert ni (toRelation t) itd)
                                                        (insertIN ni (toRelation t) dti)
 
-lookupOUT :: (IsRelation t (Maybes as), HRC as) => t -> HyperRelation as -> [Int]
-lookupOUT t (HyperRelation itd dti) = fromMaybe [] . fmap IS.toList $ simultLookupIN (toRelation t) dti
-
-lookupOUT2 :: (IsRelation t (Maybes as), HRC as, IsRelation s as) => t -> HyperRelation as -> [s]
-lookupOUT2 t (HyperRelation itd dti) = map (fromRelation . fromJust . flip IM.lookup itd) . fromMaybe [] . fmap IS.toList $ simultLookupIN (toRelation t) dti
+lookupOUT :: (IsRelation t (Maybes as), HRC as, IsRelation s as) => t -> HyperRelation as -> [s]
+lookupOUT t (HyperRelation itd dti) = map (fromRelation . fromJust . flip IM.lookup itd)
+                                    . fromMaybe []
+                                    . fmap IS.toList
+                                    $ simultLookupIN (toRelation t) dti
 
 class HRC (as :: [*]) where
   emptyIN     :: HyperRelation' as
