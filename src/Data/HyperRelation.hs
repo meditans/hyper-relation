@@ -30,8 +30,7 @@ import           Data.Hashable                            (Hashable)
 import           Data.Maybe                               (catMaybes, fromJust, fromMaybe)
 import           Prelude                                  hiding (lookup)
 
-import qualified Data.HyperRelation.Internal.IndexMapping as IMM
-import           Data.HyperRelation.Internal.Proxy
+-- import           Data.HyperRelation.Internal.Proxy
 import           Data.HyperRelation.Internal.Relation
 
 import qualified Data.HashMap.Strict                      as HM
