@@ -25,19 +25,20 @@ module Data.HyperRelation
   -- )
   where
 
-import           Control.Applicative                      (liftA2)
-import           Data.Hashable                            (Hashable)
-import           Data.Maybe                               (catMaybes, fromJust, fromMaybe)
-import           Prelude                                  hiding (lookup)
+import           Control.Applicative                  (liftA2)
+import           Data.Hashable                        (Hashable)
+import qualified Data.HashMap.Strict                  as HM
+import qualified Data.HashSet                         as HS
+import           Data.IntMap                          (IntMap)
+import qualified Data.IntMap                          as IM
+import qualified Data.IntSet                          as IS
+import           Data.List                            (foldl', maximumBy, minimumBy)
+import           Data.Maybe                           (catMaybes, fromJust, fromMaybe)
+import           Data.Ord                             (comparing)
+import           Prelude                              hiding (lookup)
 
 -- import           Data.HyperRelation.Internal.Proxy
 import           Data.HyperRelation.Internal.Relation
-
-import qualified Data.HashMap.Strict                      as HM
-import qualified Data.HashSet                             as HS
-import           Data.IntMap                              (IntMap)
-import qualified Data.IntMap                              as IM
-import qualified Data.IntSet                              as IS
 
 -- | A hyperrelation is composed of: a map:
 --   Index -> (tuple of values)
