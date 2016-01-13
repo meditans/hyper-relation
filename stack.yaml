@@ -4,4 +4,4 @@ packages:
 - '.'
 extra-deps:
 - quickcheck-property-monad-0.2.4
-resolver: lts-3.11
+resolver: lts-4.0
