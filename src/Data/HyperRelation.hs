@@ -85,7 +85,7 @@ insertOUT t (HyperRelation itd dti) = let ni = IM.size itd + 1
 
 lookupOUT :: (IsRelation t (Maybes as), HRC as, IsRelation s as) => t -> HyperRelation as -> [s]
 lookupOUT t (HyperRelation itd dti) = map (fromRelation . fromJust . flip IM.lookup itd)
-                                    . fromMaybe []
+                                    . fromMaybe (IM.keys itd)
                                     . fmap IS.toList
                                     $ lookupIN (toRelation t) dti
 
@@ -105,22 +105,11 @@ instance (Hashable a, Eq a, HRC as) => HRC (a ': as) where
   emptyIN = HM.empty :<=>: emptyIN
   singletonIN (x :<->: xs) = HM.singleton x (IS.singleton 0) :<=>: singletonIN xs
   insertIN i (x :<->: xs) (m :<=>: ms) = HM.insertWith IS.union x (IS.singleton i) m :<=>: insertIN i xs ms
-
-  -- | Probabilmente devo usare la monade First
-  -- Provare inoltre cosa fa quando non c'e' quello che si sta cercando.
   lookupIN (Nothing :<->: as) (h :<=>: hs) = lookupIN as hs
   lookupIN (Just a  :<->: as) (h :<=>: hs) =
     case lookupIN as hs of
-      Just goodIndices -> case HM.lookup a h of
-        Just newIndices -> Just $ IS.intersection goodIndices newIndices
-        Nothing         -> Just goodIndices
-      Nothing -> case HM.lookup a h of
-        Just newIndices -> Just newIndices
-        Nothing         -> Nothing
-
--- se mi vengono ritornati indici, vuole dire che devo rastremare, in altre
--- parole il nothing vuol dire che non me ne frega niente, e ce l'ho solo se non
--- me ne frega niente in nessuno dei due posti.
+      Just is -> Just $ maybe (IS.empty) (IS.intersection is) (HM.lookup a h)
+      Nothing -> Just $ maybe (IS.empty) id                   (HM.lookup a h)
 
 fromList :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
 fromList = foldl (flip insertOUT) emptyOUT
