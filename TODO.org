@@ -1,0 +1,14 @@
+* Todos
+** TODO  Think about using the package Data.IntSet.Translatable      <2016-01-13 Wed 15:26>
+This is because the append function between HyperRelation requires translation
+in the indexes. But how that packages compares wrt other operations, like
+intersection?
+ 
+ Link: file:~/code/haskell/hyper-relation/src/Data/HyperRelation.hs::module%20Data.HyperRelation
+** TODO  Change the Show instance of HyperRelation      <2016-01-13 Wed 15:40>
+This should be done after the development becomes stable. This in analogy to
+what the other data structure packages do (containers etc.): they just represent
+a structure with "fromList STUFF", where STUFF contains only the useful
+informations.
+ 
+ Link: file:~/code/haskell/hyper-relation/src/Data/HyperRelation.hs::deriving%20instance%20(Show%20(Relation%20as),%20Show%20(HyperRelation'%20as))%20=>%20Show%20(HyperRelation%20as)
