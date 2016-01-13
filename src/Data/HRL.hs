@@ -13,3 +13,8 @@
 -- instance (Eq a, Hashable a, HRL n as) => HRL ('S n) (a ': as) where
 --   member        Proxy x (_ :<=>: ms) = member (Proxy :: Proxy n) x ms
 --   lookupIndices Proxy x (_ :<=>: ms) = lookupIndices (Proxy :: Proxy n) x ms
+
+-- -- | Example usage: `lookup first rel hyrel` finds all the relations containing
+-- --   `rel` in the first position.
+-- lookup :: (HRL n as, HRC as, IsRelation a as) => Proxy n -> TypeAt n as -> HyperRelation' as -> [a]
+-- lookup proxy x m = map fromRelation . catMaybes . map (\i -> lookupRelation i m) . HS.toList $ (lookupIndices proxy x m)

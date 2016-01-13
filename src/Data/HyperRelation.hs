@@ -126,11 +126,6 @@ fromList :: (HRC as, IsRelation a as) => [a] -> HyperRelation as
 fromList = foldl (flip insertOUT) emptyOUT
 
 
--- -- | Example usage: `lookup first rel hyrel` finds all the relations containing
--- --   `rel` in the first position.
--- lookup :: (HRL n as, HRC as, IsRelation a as) => Proxy n -> TypeAt n as -> HyperRelation' as -> [a]
--- lookup proxy x m = map fromRelation . catMaybes . map (\i -> lookupRelation i m) . HS.toList $ (lookupIndices proxy x m)
-
 -- hyperLookup :: (HRC as, IsRelation a (Maybes as), IsRelation b as) => a -> HyperRelation' as -> [b]
 -- hyperLookup rel hyrel = map fromRelation . catMaybes
 --                          $ map (\i -> lookupRelation i hyrel) . HS.toList . maybe HS.empty id
