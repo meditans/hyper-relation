@@ -19,6 +19,9 @@ infixr 4 :<->:
 deriving instance Show (Relation '[])
 deriving instance (Show a, Show (Relation as)) => Show (Relation (a ': as))
 
+deriving instance Eq (Relation '[])
+deriving instance (Eq a, Eq (Relation as)) => Eq (Relation (a ': as))
+
 ---------- Maybes type family
 type family Maybes a where
   Maybes ('[])     = '[]
