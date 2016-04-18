@@ -16,6 +16,8 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Data.HyperRelation
+  other-modules:       Data.HyperRelation.Internal.Relation
+                       Data.HyperRelation.Internal.Proxy
   build-depends:       base >= 4.7 && < 5
                      , hashable >= 1.2.3.3
                      , unordered-containers >= 0.2.5.1
