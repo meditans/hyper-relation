@@ -52,8 +52,9 @@ import           Data.HyperRelation.Internal.Relation
 -- Maybe IsRelation is not the best name for this.
 
 data HyperRelation (as :: [*]) = HyperRelation
-                                 { indexToData :: IntMap (Relation Identity as)
-                                 , dataToIndex :: HyperRelation' as
+                                 { indexToData   :: IntMap (Relation Identity as)
+                                 , dataToIndex   :: HyperRelation' as
+                                 , injectivities :: [(IS.IntSet, IS.IntSet)]
                                  }
 
 infixr 4 :<=>:
@@ -75,15 +76,17 @@ sizeOUT :: HyperRelation as -> Int
 sizeOUT = IM.size . indexToData
 
 emptyOUT :: HRC as => HyperRelation as
-emptyOUT = HyperRelation IM.empty emptyIN
+emptyOUT = HyperRelation IM.empty emptyIN []
 
 singletonOUT :: (IsRelation Identity t as, HRC as) => t -> HyperRelation as
 singletonOUT t = HyperRelation (IM.fromList [(0, toRelation t)])
                                (singletonIN (toRelation t))
+                               []
 
 insertOUT :: (IsRelation Identity t as, HRC as) => t -> HyperRelation as -> HyperRelation as
 insertOUT t hr = HyperRelation (IM.insert ni (toRelation t) itd)
                                (insertIN  ni (toRelation t) dti)
+                               []
   where itd = indexToData hr
         dti = dataToIndex hr
         ni = IM.size itd + 1
@@ -136,7 +139,9 @@ exHyperRelation = HyperRelation ( IM.fromList [(1, (Identity "carlo" :<->:
                                 ( HM.fromList [("carlo" , IS.fromList [1])]
                             :<=>: HM.fromList [(25      , IS.fromList [1])]
                             :<=>: HM.fromList [('n'     , IS.fromList [1])]
-                            :<=>: EndHR)
+                            :<=>: EndHR )
+                                []
+
 
 exHyperRelation2 :: HyperRelation '[String, Int, Char]
 exHyperRelation2 = fromList [ ("carlo"  , 25, 'c')
