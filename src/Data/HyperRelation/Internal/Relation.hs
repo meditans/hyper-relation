@@ -29,7 +29,7 @@ type family Maybes a where
 
 ---------- RelationSideAt class
 class RelationSideAt (n :: Nat) (as :: [*]) where
-    -- |Retrieve the value at the specified side of the relation.
+    -- | Retrieve the value at the specified side of the relation.
     sideAt :: Proxy n -> Relation as -> TypeAt n as
 
 instance RelationSideAt 'Z (a ': as) where
@@ -82,3 +82,30 @@ instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8) '[a0, a1, a2, a3, a4, a
 instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) '[a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] where
     toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel
     fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9)
+
+
+---- Examples
+exRel :: Relation '[Integer, Char]
+exRel = 3 :<->: 'c' :<->: EndRel
+
+---------- Justify Class
+class Justify (as :: [*]) where
+    justify :: Relation as -> Relation (Maybes as)
+
+instance Justify '[] where
+    justify = id
+
+instance Justify as => Justify (a ': as) where
+    justify (a :<->: rs) = Just a :<->: justify rs
+
+---------- Nullify class
+class Nullify (as :: [*]) where
+    nullify :: Int -> Relation (Maybes as) -> Relation (Maybes as)
+
+instance Nullify '[] where
+    nullify _ = id
+
+instance (Justify as, Nullify as) => Nullify (a ': as) where
+    nullify 1 (a :<->: rs) = Nothing :<->: rs
+    -- nullify n (a :<->: rs) = a       :<->: nullify (n-1) rs
+    nullify n (a :<->: rs) = undefined
