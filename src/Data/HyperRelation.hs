@@ -82,15 +82,17 @@ singletonOUT t = HyperRelation (IM.fromList [(0, toRelation t)])
                                (singletonIN (toRelation t))
 
 insertOUT :: (IsRelation Identity t as, HRC as) => t -> HyperRelation as -> HyperRelation as
-insertOUT t (HyperRelation itd dti) = let ni = IM.size itd + 1
-                                      in HyperRelation (IM.insert ni (toRelation t) itd)
-                                                       (insertIN ni (toRelation t) dti)
+insertOUT t hr = HyperRelation (IM.insert ni (toRelation t) itd)
+                               (insertIN  ni (toRelation t) dti)
+  where itd = indexToData hr
+        dti = dataToIndex hr
+        ni = IM.size itd + 1
 
 lookupOUT :: (HRC as, IsRelation Maybe t as, IsRelation Identity s as) => t -> HyperRelation as -> [s]
-lookupOUT t (HyperRelation itd dti) = map (fromRelation . fromJust . flip IM.lookup itd)
-                                    . fromMaybe (IM.keys itd)
-                                    . fmap IS.toList
-                                    $ lookupIN (toRelation t) dti
+lookupOUT t hr = map (fromRelation . fromJust . flip IM.lookup itd)
+               $ fromMaybe (IM.keys itd) (IS.toList <$> lookupIN (toRelation t) dti)
+  where itd = indexToData hr
+        dti = dataToIndex hr
 
 class HRC (as :: [*]) where
   emptyIN     :: HyperRelation' as
