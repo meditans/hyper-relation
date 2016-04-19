@@ -1,111 +1,140 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, TypeFamilies, StandaloneDeriving #-}
-{-# LANGUAGE FunctionalDependencies, ScopedTypeVariables, TypeOperators, DataKinds #-}
+{-# LANGUAGE DataKinds              #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs                  #-}
+{-# LANGUAGE KindSignatures         #-}
+{-# LANGUAGE TypeOperators          #-}
 
 module Data.HyperRelation.Internal.Relation where
 
-import Data.HyperRelation.Internal.Proxy
+import           Data.Functor.Identity
 
----------- Relation data family
-data family Relation (as :: [*])
-data instance Relation '[] = EndRel
-data instance Relation (a ': as) = a :<->: Relation as
-
-type family TypeAt (n :: Nat) (as :: [*]) where
-    TypeAt 'Z     (a ': as) = a
-    TypeAt ('S n) (a ': as) = TypeAt n as
+data Relation :: (* -> *) -> [*] -> * where
+  EndR    :: Relation f '[]
+  (:<->:) :: f a -> Relation f as -> Relation f (a ': as)
 
 infixr 4 :<->:
 
-deriving instance Show (Relation '[])
-deriving instance (Show a, Show (Relation as)) => Show (Relation (a ': as))
+instance Show (Relation f '[]) where
+  show EndR = "EndR"
+instance (Show (f a), Show (Relation f as)) => Show (Relation f (a ': as)) where
+  show (a :<->: as) = show a ++ " :<->: " ++ show as
 
-deriving instance Eq (Relation '[])
-deriving instance (Eq a, Eq (Relation as)) => Eq (Relation (a ': as))
+-- ---------- RelationSideAt class
+-- class RelationSideAt (n :: Nat) (as :: [*]) where
+--     -- | Retrieve the value at the specified side of the relation.
+--     sideAt :: Proxy n -> Relation as -> TypeAt n as
 
----------- Maybes type family
-type family Maybes a where
-  Maybes ('[])     = '[]
-  Maybes (a ': as) = Maybe a ': Maybes as
+-- instance RelationSideAt 'Z (a ': as) where
+--     sideAt Proxy (x :<->: _) = x
 
----------- RelationSideAt class
-class RelationSideAt (n :: Nat) (as :: [*]) where
-    -- | Retrieve the value at the specified side of the relation.
-    sideAt :: Proxy n -> Relation as -> TypeAt n as
+-- instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
+--     sideAt Proxy (_ :<->: xs) = sideAt (Proxy :: Proxy n) xs
 
-instance RelationSideAt 'Z (a ': as) where
-    sideAt Proxy (x :<->: _) = x
+exRel :: Relation Identity '[Integer, Char]
+exRel = Identity 3 :<->: Identity 'c' :<->: EndR
 
-instance RelationSideAt n as => RelationSideAt ('S n) (a ': as) where
-    sideAt Proxy (_ :<->: xs) = sideAt (Proxy :: Proxy n) xs
+justify :: Relation Identity as -> Relation Maybe as
+justify EndR                  = EndR
+justify (Identity a :<->: as) = Just a :<->: justify as
 
----------- IsRelation class
+nullify :: Int -> Relation Maybe as -> Relation Maybe as
+nullify _ EndR = EndR
+nullify 1 (fa :<->: fas) = Nothing :<->: fas
+nullify n (fa :<->: fas) = fa :<->: nullify (n-1) fas
+
+
 class IsRelation a as | a -> as, as -> a where
-    toRelation   :: a -> Relation as
-    fromRelation :: Relation as -> a
+    toRelation   :: a -> Relation Identity as
+    fromRelation :: Relation Identity as -> a
 
 instance IsRelation () '[] where
-  toRelation () = EndRel
-  fromRelation EndRel = ()
+  toRelation () = EndR
+  fromRelation EndR = ()
 
 instance IsRelation (a0, a1) '[a0, a1] where
-    toRelation (x0, x1) = x0 :<->: x1 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: EndRel) = (x0, x1)
+    toRelation (x0, x1) = Identity x0 :<->: Identity x1 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: EndR) = (x0, x1)
 
 instance IsRelation (a0, a1, a2) '[a0, a1, a2] where
-    toRelation (x0, x1, x2) = x0 :<->: x1 :<->: x2 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: EndRel) = (x0, x1, x2)
+    toRelation (x0, x1, x2) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  EndR) =
+      (x0, x1, x2)
 
 instance IsRelation (a0, a1, a2, a3) '[a0, a1, a2, a3] where
-    toRelation (x0, x1, x2, x3) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: EndRel) = (x0, x1, x2, x3)
+    toRelation (x0, x1, x2, x3) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: EndR) =
+      (x0, x1, x2, x3)
 
 instance IsRelation (a0, a1, a2, a3, a4) '[a0, a1, a2, a3, a4] where
-    toRelation (x0, x1, x2, x3, x4) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: EndRel) = (x0, x1, x2, x3, x4)
+    toRelation (x0, x1, x2, x3, x4) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: EndR) =
+      (x0, x1, x2, x3, x4)
 
-instance IsRelation (a0, a1, a2, a3, a4, a5) '[a0, a1, a2, a3, a4, a5] where
-    toRelation (x0, x1, x2, x3, x4, x5) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: EndRel) = (x0, x1, x2, x3, x4, x5)
+instance IsRelation (a0, a1, a2, a3, a4, a5)
+                   '[a0, a1, a2, a3, a4, a5] where
+    toRelation (x0, x1, x2, x3, x4, x5) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+      EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+                  EndR) =
+      (x0, x1, x2, x3, x4, x5)
 
-instance IsRelation (a0, a1, a2, a3, a4, a5, a6) '[a0, a1, a2, a3, a4, a5, a6] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6)
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6)
+                   '[a0, a1, a2, a3, a4, a5, a6] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+      Identity x6 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+                  Identity x6 :<->: EndR) =
+      (x0, x1, x2, x3, x4, x5, x6)
 
-instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7) '[a0, a1, a2, a3, a4, a5, a6, a7] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7)
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7)
+                   '[a0, a1, a2, a3, a4, a5, a6, a7] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+      Identity x6 :<->: Identity x7 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+                  Identity x6 :<->: Identity x7 :<->: EndR) =
+      (x0, x1, x2, x3, x4, x5, x6, x7)
 
-instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8) '[a0, a1, a2, a3, a4, a5, a6, a7, a8] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7, x8)
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8)
+                   '[a0, a1, a2, a3, a4, a5, a6, a7, a8] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+      Identity x6 :<->: Identity x7 :<->: Identity x8 :<->:
+      EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+                  Identity x6 :<->: Identity x7 :<->: Identity x8 :<->:
+                  EndR) =
+      (x0, x1, x2, x3, x4, x5, x6, x7, x8)
 
-instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) '[a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] where
-    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) = x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel
-    fromRelation (x0 :<->: x1 :<->: x2 :<->: x3 :<->: x4 :<->: x5 :<->: x6 :<->: x7 :<->: x8 :<->: x9 :<->: EndRel) = (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9)
-
-
----- Examples
-exRel :: Relation '[Integer, Char]
-exRel = 3 :<->: 'c' :<->: EndRel
-
----------- Justify Class
-class Justify (as :: [*]) where
-    justify :: Relation as -> Relation (Maybes as)
-
-instance Justify '[] where
-    justify = id
-
-instance Justify as => Justify (a ': as) where
-    justify (a :<->: rs) = Just a :<->: justify rs
-
----------- Nullify class
-class Nullify (as :: [*]) where
-    nullify :: Int -> Relation (Maybes as) -> Relation (Maybes as)
-
-instance Nullify '[] where
-    nullify _ = id
-
-instance (Justify as, Nullify as) => Nullify (a ': as) where
-    nullify 1 (a :<->: rs) = Nothing :<->: rs
-    -- nullify n (a :<->: rs) = a       :<->: nullify (n-1) rs
-    nullify n (a :<->: rs) = undefined
+instance IsRelation (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)
+                   '[a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] where
+    toRelation (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) =
+      Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+      Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+      Identity x6 :<->: Identity x7 :<->: Identity x8 :<->:
+      Identity x9 :<->: EndR
+    fromRelation (Identity x0 :<->: Identity x1 :<->: Identity x2 :<->:
+                  Identity x3 :<->: Identity x4 :<->: Identity x5 :<->:
+                  Identity x6 :<->: Identity x7 :<->: Identity x8 :<->:
+                  Identity x9 :<->: EndR) =
+      (x0, x1, x2, x3, x4, x5, x6, x7, x8, x9)
