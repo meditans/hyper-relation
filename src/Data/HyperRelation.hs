@@ -1,3 +1,5 @@
+-- * Hyper-Relation
+
 {-# LANGUAGE DataKinds                 #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
@@ -139,3 +141,29 @@ exHyperRelation2 = fromList [ ("carlo"  , 25, 'c')
 -- Sarebbe bello avere un combinatore generico per le iperrelazioni, ovvero data
 -- una funzione per estrarre qualcosa dalla prima mappa e una serie di funzioni
 -- per estrarre le cose dalla seconda, restituisce un risultato compiuto.
+
+-- * Iniettivita'
+-- Quello che ci manca da fare adesso e' inserire il combinatore per determinare
+-- l'iniettivita' della mappa di cui ci stiamo occupando: di base, abbiamo bisogno
+-- di un costruttore come:
+
+-- #+BEGIN_EXAMPLE
+-- Injective (Set Nat) (Set Nat)
+-- #+END_EXAMPLE
+
+-- Che viene poi astratto a livello dei tipi consentendoci di fare i check
+-- opportuni.
+
+-- Ecco come funzionano i check. Si controlla che non siano gia' presenti relazioni
+-- che contengono gli elementi dell'insieme di arrivo specificati. Se questi
+-- elementi esistono, allora si controlla che non ci sia qualcosa con gli esatti
+-- elementi di partenza (dev'essere al piu' una a causa dell'iniettivita'). Se
+-- esistono, si fallisce, con una modalita' appropriata. Se invece non esistono, si
+-- include il nuovo legame.
+
+-- Immagino che l'unica funzione che va veramente modificata una volta aggiunto
+-- questo macchinario e' insertIN, perche' deve prendere come parametro anche il
+-- set di constraint che gli vengono forniti dalla relazione.
+
+-- L'idea sarebbe quella di usare RelationSideAt per essere in grado di guardare
+-- che l'inserzione possa essere fatta.
